@@ -8,10 +8,9 @@
 #
 #                              CHAPTER 1 -- Table 1.3
 ################################################################################
-
-rm(list = ls())                               #Clean the Global Environment
-cat ("\014")                                  #Clean the R console
-if (is.null(dev.list()) == FALSE) dev.off()   #Clean Plots
+rm(list = ls())                               # Clean the Global Environment
+cat ("\014")                                  # Clean the R console
+if (is.null(dev.list()) == FALSE) dev.off()   # Clean Plots
 
 Individual <- read.csv(text = "Dyad Person X Y Z
 1 1 5 9 3
@@ -23,7 +22,6 @@ Individual <- read.csv(text = "Dyad Person X Y Z
 Individual
 
 # 1. Reshape Individual df into Dyad df with *Base R* 
-
 Individual_1 <- Individual[which(Individual$Person == 1), ]
 Individual_2 <- Individual[which(Individual$Person == 2), ]
 
@@ -57,7 +55,6 @@ Individual_recovered == Individual
 all.equal(Individual_recovered, Individual)
 
 # 3. Reshape Individual df into Pairwise df with *Base R*
-
 temp1    <- Individual[c(TRUE, FALSE), ]
 temp2    <- Individual[c(FALSE, TRUE), ]
 
