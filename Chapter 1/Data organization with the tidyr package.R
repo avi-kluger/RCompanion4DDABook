@@ -21,21 +21,34 @@ Individual <- read.csv(text = "Dyad Person X Y Z
 3 2 9 7 5", header = TRUE, sep = " ")
 Individual
 
-# Reshape Individual df into Dyad df with *tidyverse* packages
+# Reshape with *tidyr* from the *tidyverse* packages
 # https://uc-r.github.io/tidyr
 if (!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
 
-DyadDF <- gather(Individual, variable, value, X, Y, Z) %>%
+# 1. Reshape Individual df into Dyad df with *tidyr*
+Dyad <- gather(Individual, variable, value, X, Y, Z) %>%
              unite(var, variable, Person) %>% 
              spread(var, value)
-DyadDF
+Dyad
 
-Individual_recovered <- DyadDF %>% gather(var, score, X_1:Z_2) %>% 
+# 2. Reshape Dyad df into Individual df with *tidyr* package
+Individual_recovered <- Dyad %>% gather(var, score, X_1:Z_2) %>% 
                            separate(var, c("var", "Person")) %>%  
                            spread(var, score)
-  
+Individual_recovered
+
+# Test that recovered Individual df is identical to the original
 all.equal(Individual_recovered, Individual) 
 Individual_recovered$Person <- as.numeric(Individual_recovered$Person)
 all.equal(Individual_recovered, Individual) 
 
-
+# 3. Reshape Individual df into Pairwise df with *Base R*
+var4pairwise       <- c("X", "Y", "Z")
+temp1              <- Individual[c(TRUE, FALSE), var4pairwise]
+temp2              <- Individual[c(FALSE, TRUE), var4pairwise]
+Pairwise           <- cbind(rbind(temp1, temp2), rbind(temp2, temp1))
+Pairwise
+colnames(Pairwise) <- paste0(colnames(Pairwise),
+                                      rep(1:2, each = (length(Pairwise))/2))
+Pairwise           <- cbind(Individual[, c("Dyad", "Person")], Pairwise)
+Pairwise
