@@ -23,14 +23,18 @@ group_by(Humility, Condition) %>% summarize(m.l = mean(Humility.listener),
                                             m.s = mean(Humility.Speaker),
                                             sd.s = sd(Humility.Speaker))
 
-# Distraction condition only
+# Non-Distraction condition only
 Humility <- Humility[which(Humility$Condition == 1), ]
 
 # ICC based on Pearson's r
 
-round(cor(Humility [, c("Humility.listener", "Humility.Speaker")]), 2)
+r <- round(cor(Humility[, c("Humility.listener", "Humility.Speaker")]), 2)[1, 2]
 
-t.test(Humility$Humility.listener, 
+fit <- (t.test(Humility$Humility.listener, 
        Humility$Humility.Speaker, 
        paired=TRUE, 
-       conf.level=0.95)
+       conf.level=0.95))
+dD <- (as.numeric(fit$statistic) * sqrt(2))/sqrt(nrow(Humility))
+d <- dD * sqrt(1 - r)
+dD
+d
