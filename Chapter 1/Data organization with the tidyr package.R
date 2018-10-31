@@ -6,7 +6,7 @@
 #
 # written by Avi Kluger: avik@savion.huji.ac.il
 # ideas for tighter code were contributed by: 
-#        Sarit Peri
+#        Sarit Pery
 #        Michal Lehmann
 #
 #                              CHAPTER 1 -- Table 1.3
