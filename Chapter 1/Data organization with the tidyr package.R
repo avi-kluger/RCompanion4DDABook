@@ -15,9 +15,9 @@ rm(list = ls())                               # Clean the Global Environment
 cat ("\014")                                  # Clean the R console
 if (is.null(dev.list()) == FALSE) dev.off()   # Clean Plots
 
-# Load the *tidyverse* packages: https://uc-r.github.io/tidyr
+# Load the *tidyverse* packages
 if (!require('tidyverse')) install.packages('tidyverse')
-supp(library('tidyverse'))
+suppressMessages(library('tidyverse'))
 
 # Read the data of the book
 Individual <- read.csv(text = "Dyad Person X Y Z
@@ -29,7 +29,7 @@ Individual <- read.csv(text = "Dyad Person X Y Z
 3 2 9 7 5", header = TRUE, sep = " ")
 Individual
 
-# Reshape with *tidyr*, which is in *tidyverse* 
+# Reshape with *tidyr*, which is in *tidyverse*: https://uc-r.github.io/tidyr 
 
 # 1. Reshape Individual df into Dyad df 
 Dyad <- gather(Individual, variableNames, allScores, -Dyad, -Person) %>% 
