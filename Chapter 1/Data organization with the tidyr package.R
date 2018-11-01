@@ -38,17 +38,17 @@ Dyad_df
 
 # 2. Reshape Dyad df into Individual df 
 Individual_recovered_df <- gather(Dyad_df, questionPerson, allScores, -Dyad) %>% 
-                        separate(questionPerson, c("variableNames", "Person"), 
-                                 convert = TRUE) %>%  
-                        spread(variableNames, allScores)
+                           separate(questionPerson, 
+                           c("variableNames", "Person"), convert = TRUE) %>%  
+                           spread(variableNames, allScores)
 Individual_recovered_df
 
 # Test that recovered Individual df is identical to the original
 all.equal(Individual_recovered_df, Individual_df) 
 
 # 3. Reshape Individual df into Pairwise df 
-redundantColumns   <- grep("Dyad|Person|Z", colnames(Individual_df))
-Pairwise_df    <- bind_cols(Individual_df,
-                  with(Individual_df, 
-                  Individual_df[order(Dyad, -(Person)), -redundantColumns]))
+redundantColumns <- grep("Dyad|Person|Z", colnames(Individual_df))
+Pairwise_df      <- bind_cols(Individual_df,
+                    with(Individual_df, 
+                    Individual_df[order(Dyad, -(Person)), -redundantColumns]))
 Pairwise_df
