@@ -5,9 +5,8 @@
 # New York: Guilford Press.
 #
 # written by Avi Kluger: avik@savion.huji.ac.il
-# ideas for tighter code were contributed by: 
-#        Sarit Pery
-#        Michal Lehmann
+# ideas for tighter code were contributed by: Sarit Pery & Michal Lehmann
+# advice for cleaner code: Nadav Kluger
 #
 #                              CHAPTER 1 -- Table 1.3
 ################################################################################
@@ -20,35 +19,36 @@ if (!require('tidyverse')) install.packages('tidyverse')
 suppressMessages(library('tidyverse'))
 
 # Read the data of the book
-Individual <- read.csv(text = "Dyad Person X Y Z
+Individual_df <- read.csv(text = "Dyad Person X Y Z
 1 1 5 9 3
 1 2 2 8 3
 2 1 6 3 7
 2 2 4 6 7
 3 1 3 6 5
 3 2 9 7 5", header = TRUE, sep = " ")
-Individual
+Individual_df
 
 # Reshape with *tidyr*, which is in *tidyverse*: https://uc-r.github.io/tidyr 
 
 # 1. Reshape Individual df into Dyad df 
-Dyad <- gather(Individual, variableNames, allScores, -Dyad, -Person) %>% 
-        unite (questionPerson, variableNames, Person) %>% 
-        spread(questionPerson, allScores)
-Dyad
+Dyad_df <- gather(Individual_df, variableNames, allScores, -Dyad, -Person) %>% 
+           unite (questionPerson, variableNames, Person) %>% 
+           spread(questionPerson, allScores)
+Dyad_df
 
 # 2. Reshape Dyad df into Individual df 
-Individual_recovered <- gather(Dyad, questionPerson, allScores, -Dyad) %>% 
+Individual_recovered_df <- gather(Dyad_df, questionPerson, allScores, -Dyad) %>% 
                         separate(questionPerson, c("variableNames", "Person"), 
                                  convert = TRUE) %>%  
                         spread(variableNames, allScores)
-Individual_recovered
+Individual_recovered_df
 
 # Test that recovered Individual df is identical to the original
-all.equal(Individual_recovered, Individual) 
+all.equal(Individual_recovered_df, Individual_df) 
 
 # 3. Reshape Individual df into Pairwise df 
-redundant   <- grep("Dyad|Person|Z", colnames(Individual))
-Pairwise    <- bind_cols(Individual,
-               with(Individual, Individual[order(Dyad, -(Person)), -redundant]))
-Pairwise
+redundantColumns   <- grep("Dyad|Person|Z", colnames(Individual_df))
+Pairwise_df    <- bind_cols(Individual_df,
+                  with(Individual_df, 
+                  Individual_df[order(Dyad, -(Person)), -redundantColumns]))
+Pairwise_df
