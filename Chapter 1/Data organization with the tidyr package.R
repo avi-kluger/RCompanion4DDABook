@@ -19,36 +19,36 @@ if (!require('tidyverse')) install.packages('tidyverse')
 suppressMessages(library('tidyverse'))
 
 # Read the data of the book
-Individual_df <- read.csv(text = "Dyad Person X Y Z
+individual_df <- read.csv(text = "Dyad Person X Y Z
 1 1 5 9 3
 1 2 2 8 3
 2 1 6 3 7
 2 2 4 6 7
 3 1 3 6 5
 3 2 9 7 5", header = TRUE, sep = " ")
-Individual_df
+individual_df
 
 # Reshape with *tidyr*, which is in *tidyverse*: https://uc-r.github.io/tidyr 
 
 # 1. Reshape Individual df into Dyad df 
-Dyad_df <- gather(Individual_df, variableNames, allScores, -Dyad, -Person) %>% 
+dyad_df <- gather(individual_df, variableNames, allScores, -Dyad, -Person) %>% 
            unite (questionPerson, variableNames, Person) %>% 
            spread(questionPerson, allScores)
-Dyad_df
+dyad_df
 
 # 2. Reshape Dyad df into Individual df 
-Individual_recovered_df <- gather(Dyad_df, questionPerson, allScores, -Dyad) %>% 
+Individual_recovered_df <- gather(dyad_df, questionPerson, allScores, -Dyad) %>% 
                            separate(questionPerson, 
                            c("variableNames", "Person"), convert = TRUE) %>%  
                            spread(variableNames, allScores)
 Individual_recovered_df
 
 # Test that recovered Individual df is identical to the original
-all.equal(Individual_recovered_df, Individual_df) 
+all.equal(Individual_recovered_df, individual_df) 
 
 # 3. Reshape Individual df into Pairwise df 
-redundantColumns <- grep("Dyad|Person|Z", colnames(Individual_df))
-Pairwise_df      <- bind_cols(Individual_df,
-                    with(Individual_df, 
-                    Individual_df[order(Dyad, -(Person)), -redundantColumns]))
-Pairwise_df
+redundantColumns <- grep("Dyad|Person|Z", colnames(individual_df))
+pairwise_df      <- bind_cols(individual_df,
+                    with(individual_df, 
+                    individual_df[order(Dyad, -(Person)), -redundantColumns]))
+pairwise_df
