@@ -25,6 +25,8 @@ group_by(Humility, Condition) %>% summarize(m.l = mean(Humility.listener),
 
 # Non-Distraction condition only
 Humility <- Humility[which(Humility$Condition == 1), ]
+write.csv(Humility[, 1:2], "Chapter 3/Lehmann Humility data.csv", 
+          row.names = FALSE)
 
 # ICC based on Pearson's r
 
