@@ -7,7 +7,7 @@
 # written by Avi Kluger: avik@savion.huji.ac.il
 #
 #                              CHAPTER 3 -- Table 3.1
-###############################################################################
+################################################################################
 rm(list = ls())                               # Clean the Global Environment
 cat ("\014")                                  # Clean the R console
 if (is.null(dev.list()) == FALSE) dev.off()   # Clean Plots
