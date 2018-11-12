@@ -23,7 +23,7 @@ if (!require("nlme")) install.packages("nlme"); library(nlme)
 
 mlm     <- gls(total ~ 1, data = Klump_et_al,
            na.action = "na.omit", verbose = TRUE,
-           correlation=corCompSymm(form = ~1|dyad))
+           correlation = corCompSymm(form = ~1|dyad))
 icc     <- intervals(mlm) ["corStruct"]
 round(as.data.frame(icc), 3)
 

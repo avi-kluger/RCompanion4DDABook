@@ -1,5 +1,5 @@
 ################################################################################
-#    **************************** R companion for ************************** 
+#   **************************** R companion for ************************** 
 #
 # Kenny, D. A., Kashy, D. A., & Cook, W. L. (2006). Dyadic data analysis. 
 # New York: Guilford Press.
@@ -33,6 +33,7 @@ Dyad
 remove <- c(grep("Person", colnames(Dyad)),
             grep("Dyad2" , colnames(Dyad)))
 Dyad   <- Dyad[, -remove]
+rownames(Dyad) <- NULL
 Dyad
 
 # 2. Reshape Dyad df into Individual df with  *Base R* 
