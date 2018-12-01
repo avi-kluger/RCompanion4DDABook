@@ -22,9 +22,10 @@ colnames(table6.1_df) <- c(paste(
                            rep(c("W", "H"), each = 3), sep = "."), 
                            "lengthOfMarriage")
 
-if (!require('lavaan')) install.packages('lavann'); library('lavaan')
+if (!require('lavaan')) install.packages('lavaan'); library('lavaan')
 
-Figure6.4.model <- ' closeness.W  ~~  commitment.W
+Figure6.4.model.unconstrained <- ' 
+                     closeness.W  ~~  commitment.W
                      closeness.W  ~~  satisfaction.W
                      commitment.W ~~  satisfaction.W
 
@@ -53,10 +54,11 @@ Figure6.4.model <- ' closeness.W  ~~  commitment.W
                    satisfaction.W ~~  satisfaction.W
 '
 
-fit <- sem(Figure6.4.model, 
-           data = table6.1_df, 
-           meanstructure = TRUE)
-summary(fit, standardized=TRUE)
+fitUnconstrained <- sem(Figure6.4.model.unconstrained, 
+                        data = table6.1_df,
+                        meanstructure = TRUE,
+                        mimic = "EQS")
+summary(fitUnconstrained, standardized=TRUE)
 
 
 # Constrain relationships, variances, and means (intercepts)
@@ -101,6 +103,52 @@ Figure6.4.model.constrain.all <- '
 
 fitConstrainedAll <- sem(Figure6.4.model.constrain.all, 
            data = table6.1_df, 
-           meanstructure = TRUE)
+           meanstructure = TRUE, mimic = "EQS")
 summary(fitConstrainedAll, standardized=TRUE)
-anova(fit, fitConstrainedAll)
+anova(fitUnconstrained, fitConstrainedAll)
+
+# Constrain relationships, variances, and free means (intercepts)
+Figure6.4.model.free.means <- ' 
+                     closeness.W  ~~  w*commitment.W
+                     closeness.W  ~~  bb*satisfaction.W
+                     commitment.W ~~  nn*satisfaction.W
+
+                     closeness.H  ~~  w*commitment.H
+                     closeness.H  ~~  bb*satisfaction.H
+                     commitment.H ~~  nn*satisfaction.H
+
+                     closeness.W  ~~  gg*commitment.H
+                     closeness.W  ~~  qq*satisfaction.H
+                     commitment.W ~~  zz*satisfaction.H
+
+                     closeness.H  ~~  gg*commitment.W
+                     closeness.H  ~~  qq*satisfaction.W
+                     commitment.H ~~  zz*satisfaction.W
+
+                     closeness.H  ~~  closeness.W
+                    commitment.H  ~~  commitment.W
+                   satisfaction.H ~~  satisfaction.W
+
+                     closeness.H  ~~  v1*closeness.H
+                    commitment.H  ~~  v2*commitment.H
+                   satisfaction.H ~~  v3*satisfaction.H
+
+                     closeness.W  ~~  v1*closeness.W
+                    commitment.W  ~~  v2*commitment.W
+                   satisfaction.W ~~  v3*satisfaction.W
+
+                     closeness.H  ~  i1 * 1
+                    commitment.H  ~  i2 * 1
+                   satisfaction.H ~  i3 * 1
+
+                     closeness.W  ~  i4 * 1
+                    commitment.W  ~  i5 * 1
+                   satisfaction.W ~  i6 * 1
+'
+
+fitConstrainedNoMeans <- sem(Figure6.4.model.free.means,
+                             data = table6.1_df,
+                             meanstructure = TRUE, 
+                             mimic = "EQS")
+summary(fitConstrainedAll, standardized=TRUE)
+anova(fitUnconstrained, fitConstrainedAll, fitConstrainedNoMeans)

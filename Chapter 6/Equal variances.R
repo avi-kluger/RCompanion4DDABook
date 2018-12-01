@@ -37,9 +37,10 @@ if (!require('psych')) install.packages('psych'); library('psych')
 print(corr.test(table6.1_df[, c("satisfactionDiff", "satisfactionSum")]), 
       short = FALSE) 
 
-if (!require('lavaan')) install.packages('lavann'); library('lavann')
+if (!require('lavaan')) install.packages('lavaan'); library('lavaan')
 
-Figure6.1.model <- ' closeness.W    ~~  commitment.W
+Figure6.1.unconstrained <- '
+                     closeness.W    ~~  commitment.W
                      closeness.W    ~~  satisfaction.W
                      commitment.W   ~~  satisfaction.W
 
@@ -68,9 +69,8 @@ Figure6.1.model <- ' closeness.W    ~~  commitment.W
                      satisfaction.W ~~  satisfaction.W
 '
 
-Figure6.1.model
 # Remove statements from core model
-Figure6.1.model.no.wife.variance <- stringr::str_replace(Figure6.1.model,
+Figure6.1.model.no.wife.variance <- stringr::str_replace(Figure6.1.unconstrained,
 "\\                  closeness.W    ~~  closeness.W
                      commitment.W   ~~  commitment.W
                      satisfaction.W ~~  satisfaction.W", "")
@@ -80,11 +80,14 @@ Figure6.1.model.constrain.variance <- paste(Figure6.1.model.no.wife.variance,"
                      commitment.W   ~~  v2*commitment.W
                      satisfaction.W ~~  v3*satisfaction.W")
   
-fit <- sem(Figure6.1.model, data = table6.1_df)
-summary(fit, standardized=TRUE)
+fitUnconstrainedVariances <- sem(Figure6.1.unconstrained, 
+                                 data = table6.1_df, 
+                                 mimic = "EQS")
+summary(fitUnconstrainedVariances, standardized=TRUE)
 
 
-fitConstrainedVariances <- sem(Figure6.1.model.constrain.variance, 
-           data = table6.1_df)
+fitConstrainedVariances <- sem(Figure6.1.model.constrain.variance,
+                               data = table6.1_df, 
+                               mimic = "EQS")
 summary(fitConstrainedVariances, standardized=TRUE)
-anova(fit, fitConstrainedVariances)
+anova(fitUnconstrainedVariances, fitConstrainedVariances)

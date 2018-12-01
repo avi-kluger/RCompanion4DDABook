@@ -37,9 +37,9 @@ if (!require('psych')) install.packages('psych'); library('psych')
 print(corr.test(table6.1_df[, c("satisfactionDiff", "satisfactionSum")]), 
       short = FALSE) 
 
-if (!require('lavaan')) install.packages('lavann'); library('lavaan')
+if (!require('lavaan')) install.packages('lavaan'); library('lavaan')
 
-Figure6.2.model <- ' 
+Figure6.2.model.unconstrained.relationships <- ' 
                      CW =~  closeness.W
                      MW =~  commitment.W
                      SW =~  satisfaction.W
@@ -49,11 +49,13 @@ Figure6.2.model <- '
                      SH =~  satisfaction.H
 '
  
-fit <- sem(Figure6.2.model, data = table6.1_df)
-summary(fit, standardized=TRUE)
+fitUnconstrained <- sem(Figure6.2.model.unconstrained.relationships,
+                        data = table6.1_df,
+                        mimic = "EQS")
+summary(fitUnconstrained, standardized=TRUE)
 
 
-Figure6.2.model.constrain.relationships <- ' 
+Figure6.2.model.constrained.relationships <- ' 
                      CW =~  closeness.W
                      MW =~  commitment.W
                      SW =~  satisfaction.W
@@ -80,10 +82,12 @@ Figure6.2.model.constrain.relationships <- '
 
 '
 
-fitConstrainedRelationships <- sem(Figure6.2.model.constrain.relationships, 
-                               data = table6.1_df,  std.lv = TRUE)
+fitConstrainedRelationships <- sem(Figure6.2.model.constrained.relationships, 
+                               data = table6.1_df,  
+                               std.lv = TRUE, 
+                               mimic = "EQS")
 summary(fitConstrainedRelationships, standardized=TRUE)
-anova(fit, fitConstrainedRelationships)
+anova(fitUnconstrained, fitConstrainedRelationships)
 
 # Add variance constraints 
 Figure6.2.model.constrain.all <- ' 
@@ -110,89 +114,11 @@ Figure6.2.model.constrain.all <- '
                      CH ~~ b1*MW
                      CH ~~ b2*SW
                      SH ~~ b3*MW
-
 '
 
 fitConstrainedAll <- sem(Figure6.2.model.constrain.all, 
-                               data = table6.1_df, std.lv = TRUE)
+                         data   = table6.1_df, 
+                         std.lv = TRUE, 
+                         mimic  = "EQS")
 summary(fitConstrainedAll, standardized=TRUE)
-anova(fit, fitConstrainedRelationships, fitConstrainedAll)
-
-
-# Add reliability constraints 
-Figure6.2.model.constrain.rel <- ' 
-                     CW =~  v1*closeness.W
-                     MW =~  v2*commitment.W
-                     SW =~  v3*satisfaction.W
-
-                     CH =~  v1*closeness.H
-                     MH =~  v2*commitment.H
-                     SH =~  v3*satisfaction.H
-
-                     CW ~~ a1*MW
-                     CW ~~ a2*SW
-                     SW ~~ a3*MW
-
-                     CH ~~ a1*MH
-                     CH ~~ a2*SH
-                     SH ~~ a3*MH
-
-                     CW ~~ b1*MH
-                     CW ~~ b2*SH
-                     SW ~~ b3*MH
-
-                     CH ~~ b1*MW
-                     CH ~~ b2*SW
-                     SH ~~ b3*MW
-
-                     CW ~~ NA*CW
-                     MW ~~ NA*MW
-                     SW ~~ NA*SW
-
-                     CH ~~ 1*CH
-                     MH ~~ 1*MH
-                     SH ~~ 1*SH
-'
-
-fitConstrainedRel <- sem(Figure6.2.model.constrain.rel, 
-                               data = table6.1_df)
-summary(fitConstrainedRel, standardized=TRUE)
-
-Figure6.2.model.constrain.rel.null <- ' 
-                     CW =~  v1*closeness.W
-                     MW =~  v2*commitment.W
-                     SW =~  v3*satisfaction.W
-
-                     CH =~  v1*closeness.H
-                     MH =~  v2*commitment.H
-                     SH =~  v3*satisfaction.H
-
-                     CW ~~ a1*MW
-                     CW ~~ a2*SW
-                     SW ~~ a3*MW
-
-                     CH ~~ a1*MH
-                     CH ~~ a2*SH
-                     SH ~~ a3*MH
-
-                     CW ~~ b1*MH
-                     CW ~~ b2*SH
-                     SW ~~ b3*MH
-
-                     CH ~~ b1*MW
-                     CH ~~ b2*SW
-                     SH ~~ b3*MW
-
-                     CW ~~ 1*CW
-                     MW ~~ 1*MW
-                     SW ~~ 1*SW
-
-                     CH ~~ 1*CH
-                     MH ~~ 1*MH
-                     SH ~~ 1*SH
-'
-
-fitConstrainedRelNull <- sem(Figure6.2.model.constrain.rel.null, 
-                               data = table6.1_df)
-
-anova(fitConstrainedRel, fitConstrainedRelNull)
+anova(fitUnconstrained, fitConstrainedRelationships, fitConstrainedAll)
