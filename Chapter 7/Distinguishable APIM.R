@@ -95,7 +95,7 @@ figure7.3_df$mdistr <- (figure7.3_df$mdistr - distrMean)/distrSD
 apimDistinguisableStandardized <- sem(APIM_distinguisable,
                                      data = figure7.3_df)
                          
-# Examine that model.
+# Examine that standadized results with correct and incorrect approaches.
 
 parameterEstimates(apimDistinguisableStandardized)
 standardizedSolution(apimDistinguisable)
