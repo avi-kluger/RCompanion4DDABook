@@ -20,9 +20,6 @@ figure7.3_df <- read.spss("http://davidakenny.net/kkc/c7/campbell.sav",
 # The data is already organized as pairwise
 head(figure7.3_df) 
 
-if (!require("nlme")) install.packages("nlme"); 
-suppressMessages(library(nlme))
-
 
 if (!require("lavaan")) install.packages("lavaan"); 
 suppressPackageStartupMessages(library(lavaan))
@@ -58,11 +55,13 @@ if (!require("semPlot")) install.packages("semPlot");
 suppressPackageStartupMessages(library(semPlot))
 
 
-semPaths(apimDistinguisable, "est",
+semPaths(apimDistinguisable, 
+         "est",
          sizeMan = 15,
          residuals = TRUE,
          intercepts = FALSE, 
-         rotation = 2, 
+         rotation = 2,
+         style = "lisrel",
          exoVar = FALSE, 
          exoCov = TRUE, 
          nCharNodes = 0,
@@ -71,7 +70,10 @@ semPaths(apimDistinguisable, "est",
          sizeInt = 25,
          edge.label.cex = 1.5,
          label.prop = .8,
-         edge.label.position = .4)
+         edge.label.position = c(0.5,0.5,0.3,0.3,0.5,0.5,0.5,0.5,0.5,0.5),
+         nodeLabels=c("Male\nDistress",   "Female\nDistress",
+                      "Male\nNeuroticism","Female\nNeuroticism")
+         )
 
 
 # Examine the model with standardized option -- INCORRECT.
