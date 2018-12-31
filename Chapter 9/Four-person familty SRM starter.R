@@ -55,12 +55,12 @@ suppressPackageStartupMessages(library(lavaan))
 
 family_SRMminimalLaeling <- '
 # Family effect:
-    family   =~ 1*mfanx + 1*mcanx + 1*myanx + 1*fmanx + 1*fcanx + 1*fyanx + 
-                1*cmanx + 1*cfanx + 1*cyanx + 1*ymanx + 1*yfanx + 1*ycanx
+     family   =~ 1*mfanx + 1*mcanx + 1*myanx + 1*fmanx + 1*fcanx + 1*fyanx + 
+                 1*cmanx + 1*cfanx + 1*cyanx + 1*ymanx + 1*yfanx + 1*ycanx
 
 # Actor effects:
     mActor   =~ 1*mfanx + 1*mcanx + 1*myanx
-    fActor   =~ 1*fmanx + 1*fcanx + 1*fyanx
+    Actor   =~ 1*fmanx + 1*fcanx + 1*fyanx
     cActor   =~ 1*cmanx + 1*cfanx + 1*cyanx
     yActor   =~ 1*ymanx + 1*yfanx + 1*ycanx
 
