@@ -29,7 +29,7 @@ if (!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
 
 table9.1_df$family.id <- 1:nrow(table9.1_df)
 anx_long_df <- gather(table9.1_df, actorPartnerMeasure, anx, -family.id) 
-
+head(anx_long_df)
 anx_long_df$actor.id   <- substr(anx_long_df$actorPartnerMeasure, 1, 1)
 anx_long_df$partner.id <- substr(anx_long_df$actorPartnerMeasure, 2, 2)
 
@@ -42,56 +42,47 @@ SRMIGSIM <- fSRM(anx ~ actor.id*partner.id|family.id, data = anx_long_df,
             IGSIM=list(c("m", "f"), c("c", "y")))
 SRMIGSIM
 
+# Print the lavaan syntax created by fSRM. Note, fSRM changes the variable
+# names.
+
 cat(SRM$syntax)
 cat(SRMIGSIM$syntax)
 
-familySRM <- sem(family_SRM, 
-                 data = table9.1_df,  
-                 orthogonal = TRUE,
-                 mimic = "EQS")
 
 if (!require("lavaan")) install.packages("lavaan"); 
 suppressPackageStartupMessages(library(lavaan))
 
-familySRMIntrageneartionalSimilarity <- update(familySRM, add =
-                                                 "# intragenerational similarity:
-                                               mActor   ~~ mfActor  *fActor
-                                               mPartner ~~ mfPartner*fPartner
-                                               cActor   ~~ cyActor  *yActor
-                                               cPartner ~~ cyPartner*yPartner")                         
-anova(familySRM, familySRMIntrageneartionalSimilarity)
-
 
 family_SRMminimalLaeling <- '
 # Family effect:
-family   =~ 1*mfanx + 1*mcanx + 1*myanx + 1*fmanx + 1*fcanx + 1*fyanx + 
-1*cmanx + 1*cfanx + 1*cyanx + 1*ymanx + 1*yfanx + 1*ycanx
+    family   =~ 1*mfanx + 1*mcanx + 1*myanx + 1*fmanx + 1*fcanx + 1*fyanx + 
+                1*cmanx + 1*cfanx + 1*cyanx + 1*ymanx + 1*yfanx + 1*ycanx
 
 # Actor effects:
-mActor   =~ 1*mfanx + 1*mcanx + 1*myanx
-fActor   =~ 1*fmanx + 1*fcanx + 1*fyanx
-cActor   =~ 1*cmanx + 1*cfanx + 1*cyanx
-yActor   =~ 1*ymanx + 1*yfanx + 1*ycanx
+    mActor   =~ 1*mfanx + 1*mcanx + 1*myanx
+    fActor   =~ 1*fmanx + 1*fcanx + 1*fyanx
+    cActor   =~ 1*cmanx + 1*cfanx + 1*cyanx
+    yActor   =~ 1*ymanx + 1*yfanx + 1*ycanx
 
 # Partner effects:
-mPartner =~ 1*fmanx + 1*cmanx + 1*ymanx
-fPartner =~ 1*mfanx + 1*cfanx + 1*yfanx
-cPartner =~ 1*mcanx + 1*fcanx + 1*ycanx
-yPartner =~ 1*myanx + 1*fyanx + 1*cyanx
+    mPartner =~ 1*fmanx + 1*cmanx + 1*ymanx
+    fPartner =~ 1*mfanx + 1*cfanx + 1*yfanx
+    cPartner =~ 1*mcanx + 1*fcanx + 1*ycanx
+    yPartner =~ 1*myanx + 1*fyanx + 1*cyanx
 
 # Generalized reciprocity:
-mActor   ~~ gr.m*mPartner
-fActor   ~~ gr.f*fPartner
-cActor   ~~ gr.c*cPartner
-yActor   ~~ gr.y*yPartner
+    mActor   ~~ gr.m*mPartner
+    fActor   ~~ gr.f*fPartner
+    cActor   ~~ gr.c*cPartner
+    yActor   ~~ gr.y*yPartner
 
 # Dyadic reciprocity:
-mfanx  ~~  dr.fm*fmanx
-mcanx  ~~  dr.cm*cmanx
-myanx  ~~  dr.ym*ymanx
-fcanx  ~~  dr.cf*cfanx
-fyanx  ~~  dr.yf*yfanx
-cyanx  ~~  dr.yc*ycanx
+    mfanx  ~~  dr.fm*fmanx
+    mcanx  ~~  dr.cm*cmanx
+    myanx  ~~  dr.ym*ymanx
+    fcanx  ~~  dr.cf*cfanx
+    fyanx  ~~  dr.yf*yfanx
+    cyanx  ~~  dr.yc*ycanx
 '
 # Estimate the model 
 familySRMminimalLaeling <- sem(family_SRMminimalLaeling, 
@@ -100,6 +91,10 @@ familySRMminimalLaeling <- sem(family_SRMminimalLaeling,
                  mimic = "EQS")
 # Examine the model.
 summary(familySRMminimalLaeling, fit.measures = TRUE, standardized = TRUE)
+
+# Define a model based on fSRM. This has labels for every possible parameter.
+# it produces a warning although the results are identical to the previous 
+# model.
 
 family_SRM <- '
 # Family effect:
