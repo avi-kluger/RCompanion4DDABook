@@ -60,7 +60,7 @@ family_SRMminimalLaeling <- '
 
 # Actor effects:
     mActor   =~ 1*mfanx + 1*mcanx + 1*myanx
-    Actor   =~ 1*fmanx + 1*fcanx + 1*fyanx
+    fActor   =~ 1*fmanx + 1*fcanx + 1*fyanx
     cActor   =~ 1*cmanx + 1*cfanx + 1*cyanx
     yActor   =~ 1*ymanx + 1*yfanx + 1*ycanx
 
