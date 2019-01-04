@@ -6,8 +6,8 @@
 #
 # written by Avi Kluger: avik@savion.huji.ac.il
 #
-#                              CHAPTER 7 -- APIM
-# TEST APIM with SEM
+#                              CHAPTER 8 -- SRM
+# 
 ################################################################################
 rm(list = ls())                               # Clean the Global Environment
 cat ("\014")                                  # Clean the R console

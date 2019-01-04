@@ -102,3 +102,5 @@ apimIndistinguisableActorEqualPartner <- sem(
 summary(apimIndistinguisableActorEqualPartner, fit.measures = TRUE)
 anova(apimIndistinguisableActorEqualPartner, apimIndistinguisable)
 
+
+

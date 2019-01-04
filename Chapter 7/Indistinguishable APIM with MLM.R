@@ -39,4 +39,3 @@ suppressPackageStartupMessages(library(lme4))
 lmerModel <- lmer(SATISFACTION  ~ ACT_HOUSE + PART_HOUSE + 
                 (1 | Dyad), data = table7.1_df)
 summary(lmerModel)
-
