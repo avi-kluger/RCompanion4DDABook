@@ -4,7 +4,7 @@
 # Kenny, D. A., Kashy, D. A., & Cook, W. L. (2006). Dyadic data analysis. 
 # New York: Guilford Press.
 #
-# lme code developed by Limor Borut: 
+# lme code developed by Limor Borut: limor.borut@mail.huji.ac.il 
 # written by Avi Kluger: avik@savion.huji.ac.il
 #
 #                              CHAPTER 10 -- one with many SRM 
