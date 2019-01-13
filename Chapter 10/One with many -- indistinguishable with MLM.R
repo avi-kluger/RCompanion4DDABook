@@ -35,20 +35,31 @@ cat(
 "Actor   variance = ",   round(as.numeric(VarCorr(mlm)[, "Variance"][3]), 3),
 "\nPartner variance = ", round(as.numeric(VarCorr(mlm)[, "Variance"][2]), 3),
 "\nGeneralized Reciprocity = ", round(as.numeric(VarCorr(mlm)[, "Corr"][3]), 3),
-"\nDyadic Reciprocity = ", round(as.numeric(VarCorr(mlm)[, "Corr"][6]), 3. "\n")
+"\nDyadic Reciprocity = ", round(as.numeric(VarCorr(mlm)[, "Corr"][6]), 3), "\n"
 )
 
 # Very Important Note.  The original data coded with 0 the focal person.  
 # Therefore the first random variable above is partner variance.  Reversing
 # the codes below make the results more intuitive.  I thank David Kenny for
 # Clarifying this issue.
-
 Chapter10_df$focalcode <- 1- Chapter10_df$focalcode
 Chapter10_df$partcode  <- 1- Chapter10_df$partcode
-mlm <- lme(outcome ~   0 + focalcode + 0 + partcode, 
+nlmeMlm <- lme(outcome ~   0 + focalcode + 0 + partcode, 
             random = ~ 0 + focalcode + partcode|focalid/dyadid, 
             data = Chapter10_df)
-VarCorr(mlm)
+VarCorr(nlmeMlm)
 
+# An alternative suggsted by James Uanhoro <uanhoro.1@buckeyemail.osu.edu>
 
+if (!require("lme4")) install.packages("lme4"); suppressMessages(library(lme4))
+lme4Mlm <- lmer(
+  outcome ~ 0 + focalcode + partcode +
+           (0 + focalcode + partcode | focalid/dyadid),
+            data = Chapter10_df,
+            control = lmerControl(check.nobs.vs.nRE = "warning"))
+
+as.data.frame(VarCorr(lme4Mlm))
+VarCorr(lme4Mlm)
+
+summary(lme4Mlm)
 
