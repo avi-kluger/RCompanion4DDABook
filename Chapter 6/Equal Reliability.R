@@ -37,9 +37,9 @@ if (!require('psych')) install.packages('psych'); library('psych')
 print(corr.test(table6.1_df[, c("satisfactionDiff", "satisfactionSum")]), 
       short = FALSE) 
 
-if (!require('lavaan')) install.packages('lavaan'); library('lavaan')
+if (!require('lavaan')) install.packages('lavann'); library('lavaan')
 
-Figure6.2.model.unconstrained.relationships <- ' 
+Figure6.2.model <- ' 
                      CW =~  closeness.W
                      MW =~  commitment.W
                      SW =~  satisfaction.W
@@ -49,13 +49,11 @@ Figure6.2.model.unconstrained.relationships <- '
                      SH =~  satisfaction.H
 '
  
-fitUnconstrained <- sem(Figure6.2.model.unconstrained.relationships,
-                        data = table6.1_df,
-                        mimic = "EQS")
-summary(fitUnconstrained, standardized=TRUE)
+fit <- sem(Figure6.2.model, data = table6.1_df)
+summary(fit, standardized=TRUE)
 
 
-Figure6.2.model.constrained.relationships <- ' 
+Figure6.2.model.constrain.relationships <- ' 
                      CW =~  closeness.W
                      MW =~  commitment.W
                      SW =~  satisfaction.W
@@ -82,12 +80,10 @@ Figure6.2.model.constrained.relationships <- '
 
 '
 
-fitConstrainedRelationships <- sem(Figure6.2.model.constrained.relationships, 
-                               data = table6.1_df,  
-                               std.lv = TRUE, 
-                               mimic = "EQS")
+fitConstrainedRelationships <- sem(Figure6.2.model.constrain.relationships, 
+                               data = table6.1_df,  std.lv = TRUE)
 summary(fitConstrainedRelationships, standardized=TRUE)
-anova(fitUnconstrained, fitConstrainedRelationships)
+anova(fit, fitConstrainedRelationships)
 
 # Add variance constraints 
 Figure6.2.model.constrain.all <- ' 
@@ -114,55 +110,13 @@ Figure6.2.model.constrain.all <- '
                      CH ~~ b1*MW
                      CH ~~ b2*SW
                      SH ~~ b3*MW
+
 '
 
 fitConstrainedAll <- sem(Figure6.2.model.constrain.all, 
-                         data   = table6.1_df, 
-                         std.lv = TRUE, 
-                         mimic  = "EQS")
+                               data = table6.1_df, std.lv = TRUE)
 summary(fitConstrainedAll, standardized=TRUE)
-anova(fitUnconstrained, fitConstrainedAll)
-anova(fitUnconstrained, fitConstrainedRelationships, fitConstrainedAll)
+anova(fit, fitConstrainedRelationships, fitConstrainedAll)
 
-# Try to replicated correlation constrained for testing reliability 
-Figure6.2.model.constrain.reliability <- ' 
-                     CW =~  closeness.W
-                     MW =~  commitment.W
-                     SW =~  satisfaction.W
 
-                     CH =~  closeness.H
-                     MH =~  commitment.H
-                     SH =~  satisfaction.H
-
-                     CW ~~ a1*MW
-                     CW ~~ a2*SW
-                     SW ~~ a3*MW
-
-                     CH ~~ a1*MH
-                     CH ~~ a2*SH
-                     SH ~~ a3*MH
-
-                     CW ~~ b1*MH
-                     CW ~~ b2*SH
-                     SW ~~ b3*MH
-
-                     CH ~~ b1*MW
-                     CH ~~ b2*SW
-                     SH ~~ b3*MW
-
-                     CH ~~ a*CH
-                     MH ~~ b*MH
-                     SH ~~ c*SH
-               
-                     CW ~~ d*CW
-                     MW ~~ f*MW
-                     SW ~~ g*SW
-               
-'
-
-fitConstrainedRel <- sem(Figure6.2.model.constrain.reliability, 
-                         data   = table6.1_df, 
-                         mimic  = "EQS")
-summary(fitConstrainedRel, standardized=TRUE)
-anova(fitUnconstrained, fitConstrainedRelationships, fitConstrainedAll, fitConstrainedRel)
-
+# Add reliability constraints 

@@ -174,6 +174,69 @@ OneWithManyIndistinguisable <- '
     ymanx ~ ip * 1
 '
 
+# Define an indsitguisable model with same relationship variances
+
+OneWithManyIndistinguisableSameRelVar <- '
+# Actor effect:
+Actor   =~ 1*mfanx + 1*mcanx + 1*myanx
+
+# Partner effect:
+Partner =~ 1*fmanx + 1*cmanx + 1*ymanx
+
+# Relationship effects:
+relationship.cm =~ 1* cmanx
+relationship.fm =~ 1* fmanx
+relationship.mc =~ 1* mcanx
+relationship.mf =~ 1* mfanx
+relationship.my =~ 1* myanx
+relationship.ym =~ 1* ymanx
+
+# Fix observed variance to zero so it is "transfered" to the latent variables
+    cmanx ~~ 0* cmanx
+    fmanx ~~ 0* fmanx
+    mcanx ~~ 0* mcanx
+    mfanx ~~ 0* mfanx
+    myanx ~~ 0* myanx
+    ymanx ~~ 0* ymanx
+
+# Relationship :
+myanx ~~ va* myanx
+mfanx ~~ va* mfanx
+mcanx ~~ va* mcanx
+cmanx ~~ vp* cmanx
+fmanx ~~ vp* fmanx
+ymanx ~~ vp* ymanx
+
+# Generalized reciprocity:
+Actor   ~~ Partner
+
+# Dyadic reciprocity:
+mfanx  ~~  dr*fmanx 
+mcanx  ~~  dr*cmanx
+myanx  ~~  dr*ymanx
+
+# Variance labels
+
+Actor   ~~ Actor 
+Partner ~~ Partner 
+
+relationship.mc ~~ rv *  relationship.mc
+relationship.mf ~~ rv *  relationship.mf
+relationship.my ~~ rv *  relationship.my
+relationship.cm ~~ rv *  relationship.cm
+relationship.fm ~~ rv *  relationship.fm
+relationship.ym ~~ rv *  relationship.ym
+
+# Intercepts
+
+# Intercepts
+cmanx ~ ip * 1
+fmanx ~ ip * 1
+mcanx ~ ia * 1
+mfanx ~ ia * 1
+myanx ~ ia * 1
+ymanx ~ ip * 1
+'
 # Estimate the model 
 fitOneWithManyIndistinguisable <- sem(OneWithManyIndistinguisable, 
                  data       = table9.1_df,  
@@ -183,3 +246,78 @@ fitOneWithManyIndistinguisable <- sem(OneWithManyIndistinguisable,
 summary(fitOneWithManyIndistinguisable, fit.measures = TRUE, standardized = TRUE)
 
 
+
+fitOneWithManyIndistinguisableSameRelVar <- 
+                                      sem(OneWithManyIndistinguisableSameRelVar, 
+                                      data       = table9.1_df,  
+                                      orthogonal = TRUE,
+                                      mimic      = "EQS")
+anova(fitOneWithManyIndistinguisable, fitOneWithManyIndistinguisableSameRelVar)
+summary(fitOneWithManyIndistinguisableSameRelVar, fit.measures = TRUE, standardized=TRUE)
+
+
+family_SRM <- '
+    # Family effect:
+    # family   =~ 1*mfanx + 1*mcanx + 1*myanx + 1*fmanx + 1*cmanx + 1*ymanx 
+    
+    # Actor effects:
+    mActor   =~ 1*mfanx + 1*mcanx + 1*myanx
+    
+    # Partner effects:
+    mPartner =~ 1*fmanx + 1*cmanx + 1*ymanx
+    
+    # Relationship effects:
+    relationship.cm =~ 1* cmanx
+    relationship.fm =~ 1* fmanx
+    relationship.mc =~ 1* mcanx
+    relationship.mf =~ 1* mfanx
+    relationship.my =~ 1* myanx
+    relationship.ym =~ 1* ymanx
+    
+    # Fix observed variance to zero so it is "transfered" to the latent variables
+    cmanx ~~ 0* cmanx
+    fmanx ~~ 0* fmanx
+    mcanx ~~ 0* mcanx
+    mfanx ~~ 0* mfanx
+    myanx ~~ 0* myanx
+    ymanx ~~ 0* ymanx
+    
+    # Generalized reciprocity:
+    mActor   ~~ gr.m*mPartner
+    
+    # Dyadic reciprocity:
+    mfanx  ~~  dr*fmanx 
+    mcanx  ~~  dr*cmanx
+    myanx  ~~  dr*ymanx
+    
+    # Variance labels
+    # family ~~ vf*family
+    
+    mActor ~~ vam*mActor 
+    
+    mPartner ~~ vpm*mPartner 
+    
+    relationship.cm ~~ rvp *  relationship.cm
+    relationship.fm ~~ rvp *  relationship.fm
+    relationship.mc ~~ rva *  relationship.mc
+    relationship.mf ~~ rva *  relationship.mf
+    relationship.my ~~ rva *  relationship.my
+    relationship.ym ~~ rvp *  relationship.ym
+
+# Intercepts
+cmanx ~ ip * 1
+fmanx ~ ip * 1
+mcanx ~ ia * 1
+mfanx ~ ia * 1
+myanx ~ ia * 1
+ymanx ~ ip * 1
+'
+
+# Estimate the model 
+familySRM <- sem(family_SRM, 
+                 data = table9.1_df,  
+                 orthogonal = TRUE,
+                 mimic = "EQS",
+                 estimator ="MLM")
+# Examine the model.
+summary(familySRM, fit.measures = TRUE, standardized=TRUE)

@@ -21,16 +21,16 @@ if (!require("nlme")) install.packages("nlme"); library(nlme)
 
 mlm_null     <- gls(future ~ 1, correlation=corCompSymm(form = ~1|dyad),
                data = couples_df)
-fit <- (summary(mlm_null))
+(fit <- summary(mlm_null))
 icc     <- as.data.frame(intervals(mlm_null) ["corStruct"])
 round(icc, 3)
 
 mlm_full     <- gls(future ~ contrib*culture, 
                     correlation=corCompSymm(form = ~1|dyad),
                     data = couples_df)
-fit <- (summary(mlm_full))
-fit
-  getVarCov(mlm_full)
+(fit <- summary(mlm_full))
+
+getVarCov(mlm_full)
 intervals(mlm_full)
 icc     <- as.data.frame(intervals(mlm_full) ["corStruct"])
 round(icc, 3)

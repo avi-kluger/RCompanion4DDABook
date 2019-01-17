@@ -57,8 +57,8 @@ fitMeasures(fit.constrained.loadings, c("cfi","rmsea","srmr"))
   
 # Constrain with equal latent variances 
 Figure6.3.model.constrained.all <- ' 
-                       Wife =~ closeness.W + a*commitment.W +  b*satisfaction.W
-                    Husband =~ closeness.H + a*commitment.H +  b*satisfaction.H
+                       Wife =~ 1*closeness.W + a*commitment.W +  b*satisfaction.W
+                    Husband =~ 1*closeness.H + a*commitment.H +  b*satisfaction.H
                        Wife ~~ Husband
                 closeness.W ~~ closeness.H
                commitment.W ~~ commitment.H
@@ -70,4 +70,5 @@ Figure6.3.model.constrained.all <- '
 fit.constrained.all <- sem(Figure6.3.model.constrained.all, 
                            data = table6.1_df, 
                            mimic = "EQS")
+summary(fit.constrained.all)
 anova(fitUnconstrained, fit.constrained.loadings, fit.constrained.all)

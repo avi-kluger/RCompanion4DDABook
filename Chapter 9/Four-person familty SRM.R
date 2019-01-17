@@ -18,13 +18,14 @@ if (!require('foreign')) install.packages('foreign'); library('foreign')
 table9.1_df <- read.spss("http://davidakenny.net/kkc/c9/4person.sav", 
                          to.data.frame = TRUE, use.value.labels = FALSE)
 
+# Print correlation matrix of Table 9.1
 table9.1_df <- table9.1_df[, -1]
 head(table9.1_df) 
 round(cor(table9.1_df), 2)
 round(colMeans(table9.1_df),2)
 round(apply(table9.1_df, 2, sd), 2)
 
-# Transform wide to long format
+# Transform wide to long format for fSRM function
 if (!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
 
 table9.1_df$family.id <- 1:nrow(table9.1_df)
@@ -36,6 +37,7 @@ anx_long_df$partner.id <- substr(anx_long_df$actorPartnerMeasure, 2, 2)
 if (!require("fSRM")) install.packages("fSRM"); 
 suppressPackageStartupMessages(library(fSRM))
 
+# Peroform analyses with fSRM
 SRM <- fSRM(anx ~ actor.id*partner.id|family.id, data = anx_long_df)
 SRM
 SRMIGSIM <- fSRM(anx ~ actor.id*partner.id|family.id, data = anx_long_df, 
@@ -52,38 +54,39 @@ cat(SRMIGSIM$syntax)
 if (!require("lavaan")) install.packages("lavaan"); 
 suppressPackageStartupMessages(library(lavaan))
 
+# Run all analyses with lavaan only (no need for data transformation)
 
 family_SRMminimalLaeling <- '
-# Family effect:
-family   =~ 1*mfanx + 1*mcanx + 1*myanx + 1*fmanx + 1*fcanx + 1*fyanx + 
-            1*cmanx + 1*cfanx + 1*cyanx + 1*ymanx + 1*yfanx + 1*ycanx
-
-# Actor effects:
-mActor   =~ 1*mfanx + 1*mcanx + 1*myanx
-fActor   =~ 1*fmanx + 1*fcanx + 1*fyanx
-cActor   =~ 1*cmanx + 1*cfanx + 1*cyanx
-yActor   =~ 1*ymanx + 1*yfanx + 1*ycanx
-
-# Partner effects:
-mPartner =~ 1*fmanx + 1*cmanx + 1*ymanx
-fPartner =~ 1*mfanx + 1*cfanx + 1*yfanx
-cPartner =~ 1*mcanx + 1*fcanx + 1*ycanx
-yPartner =~ 1*myanx + 1*fyanx + 1*cyanx
-
-# Generalized reciprocity:
-mActor   ~~ gr.m*mPartner
-fActor   ~~ gr.f*fPartner
-cActor   ~~ gr.c*cPartner
-yActor   ~~ gr.y*yPartner
-
-# Dyadic reciprocity:
-mfanx  ~~  dr.fm*fmanx
-mcanx  ~~  dr.cm*cmanx
-myanx  ~~  dr.ym*ymanx
-fcanx  ~~  dr.cf*cfanx
-fyanx  ~~  dr.yf*yfanx
-cyanx  ~~  dr.yc*ycanx
-'
+      # Family effect:
+      family   =~ 1*mfanx + 1*mcanx + 1*myanx + 1*fmanx + 1*fcanx + 1*fyanx + 
+                  1*cmanx + 1*cfanx + 1*cyanx + 1*ymanx + 1*yfanx + 1*ycanx
+      
+      # Actor effects:
+      mActor   =~ 1*mfanx + 1*mcanx + 1*myanx
+      fActor   =~ 1*fmanx + 1*fcanx + 1*fyanx
+      cActor   =~ 1*cmanx + 1*cfanx + 1*cyanx
+      yActor   =~ 1*ymanx + 1*yfanx + 1*ycanx
+      
+      # Partner effects:
+      mPartner =~ 1*fmanx + 1*cmanx + 1*ymanx
+      fPartner =~ 1*mfanx + 1*cfanx + 1*yfanx
+      cPartner =~ 1*mcanx + 1*fcanx + 1*ycanx
+      yPartner =~ 1*myanx + 1*fyanx + 1*cyanx
+      
+      # Generalized reciprocity:
+      mActor   ~~ gr.m*mPartner
+      fActor   ~~ gr.f*fPartner
+      cActor   ~~ gr.c*cPartner
+      yActor   ~~ gr.y*yPartner
+      
+      # Dyadic reciprocity:
+      mfanx  ~~  dr.fm*fmanx
+      mcanx  ~~  dr.cm*cmanx
+      myanx  ~~  dr.ym*ymanx
+      fcanx  ~~  dr.cf*cfanx
+      fyanx  ~~  dr.yf*yfanx
+      cyanx  ~~  dr.yc*ycanx
+      '
 # Estimate the model 
 familySRMminimalLaeling <- sem(family_SRMminimalLaeling, 
                                data = table9.1_df,  
@@ -97,90 +100,89 @@ summary(familySRMminimalLaeling, fit.measures = TRUE, standardized = TRUE)
 # model.
 
 family_SRM <- '
-# Family effect:
-family   =~ 1*mfanx + 1*mcanx + 1*myanx + 1*fmanx + 1*fcanx + 1*fyanx + 
-            1*cmanx + 1*cfanx + 1*cyanx + 1*ymanx + 1*yfanx + 1*ycanx
-
-# Actor effects:
-mActor   =~ 1*mfanx + 1*mcanx + 1*myanx
-fActor   =~ 1*fmanx + 1*fcanx + 1*fyanx
-cActor   =~ 1*cmanx + 1*cfanx + 1*cyanx
-yActor   =~ 1*ymanx + 1*yfanx + 1*ycanx
-
-# Partner effects:
-mPartner =~ 1*fmanx + 1*cmanx + 1*ymanx
-fPartner =~ 1*mfanx + 1*cfanx + 1*yfanx
-cPartner =~ 1*mcanx + 1*fcanx + 1*ycanx
-yPartner =~ 1*myanx + 1*fyanx + 1*cyanx
-
-# Relationship effects:
-relationship.cf =~ 1* cfanx
-relationship.cm =~ 1* cmanx
-relationship.cy =~ 1* cyanx
-relationship.fc =~ 1* fcanx
-relationship.fm =~ 1* fmanx
-relationship.fy =~ 1* fyanx
-relationship.mc =~ 1* mcanx
-relationship.mf =~ 1* mfanx
-relationship.my =~ 1* myanx
-relationship.yc =~ 1* ycanx
-relationship.yf =~ 1* yfanx
-relationship.ym =~ 1* ymanx
-
-# Fix observed variance to zero so it is "transfered" to the latent variables
-cfanx ~~ 0* cfanx
-cmanx ~~ 0* cmanx
-cyanx ~~ 0* cyanx
-fcanx ~~ 0* fcanx
-fmanx ~~ 0* fmanx
-fyanx ~~ 0* fyanx
-mcanx ~~ 0* mcanx
-mfanx ~~ 0* mfanx
-myanx ~~ 0* myanx
-ycanx ~~ 0* ycanx
-yfanx ~~ 0* yfanx
-ymanx ~~ 0* ymanx
-
-# Generalized reciprocity:
-mActor   ~~ gr.m*mPartner
-fActor   ~~ gr.f*fPartner
-cActor   ~~ gr.c*cPartner
-yActor   ~~ gr.y*yPartner
-
-# Dyadic reciprocity:
-mfanx  ~~  dr.fm*fmanx 
-mcanx  ~~  dr.cm*cmanx
-myanx  ~~  dr.ym*ymanx
-fcanx  ~~  dr.cf*cfanx
-fyanx  ~~  dr.yf*yfanx
-cyanx  ~~  dr.yc*ycanx
-
-# Variance labels
-family ~~ vf*family
-
-mActor ~~ vam*mActor 
-fActor ~~ vaf*fActor 
-cActor ~~ vac*cActor  
-yActor ~~ vay*yActor   
-
-mPartner ~~ vpm*mPartner 
-fPartner ~~ vpf*fPartner 
-cPartner ~~ vpc*cPartner  
-yPartner ~~ vpy*yPartner
-
-relationship.cf ~~ rv.cf *  relationship.cf
-relationship.cm ~~ rv.cm *  relationship.cm
-relationship.cy ~~ rv.cy *  relationship.cy
-relationship.fc ~~ rv.fc *  relationship.fc
-relationship.fm ~~ rv.fm *  relationship.fm
-relationship.fy ~~ rv.fy *  relationship.fy
-relationship.mc ~~ rv.mc *  relationship.mc
-relationship.mf ~~ rv.mf *  relationship.mf
-relationship.my ~~ rv.my *  relationship.my
-relationship.yc ~~ rv.yc *  relationship.yc
-relationship.yf ~~ rv.yf *  relationship.yf
-relationship.ym ~~ rv.ym *  relationship.ym
-
+    # Family effect:
+    family   =~ 1*mfanx + 1*mcanx + 1*myanx + 1*fmanx + 1*fcanx + 1*fyanx + 
+                1*cmanx + 1*cfanx + 1*cyanx + 1*ymanx + 1*yfanx + 1*ycanx
+    
+    # Actor effects:
+    mActor   =~ 1*mfanx + 1*mcanx + 1*myanx
+    fActor   =~ 1*fmanx + 1*fcanx + 1*fyanx
+    cActor   =~ 1*cmanx + 1*cfanx + 1*cyanx
+    yActor   =~ 1*ymanx + 1*yfanx + 1*ycanx
+    
+    # Partner effects:
+    mPartner =~ 1*fmanx + 1*cmanx + 1*ymanx
+    fPartner =~ 1*mfanx + 1*cfanx + 1*yfanx
+    cPartner =~ 1*mcanx + 1*fcanx + 1*ycanx
+    yPartner =~ 1*myanx + 1*fyanx + 1*cyanx
+    
+    # Relationship effects:
+    relationship.cf =~ 1* cfanx
+    relationship.cm =~ 1* cmanx
+    relationship.cy =~ 1* cyanx
+    relationship.fc =~ 1* fcanx
+    relationship.fm =~ 1* fmanx
+    relationship.fy =~ 1* fyanx
+    relationship.mc =~ 1* mcanx
+    relationship.mf =~ 1* mfanx
+    relationship.my =~ 1* myanx
+    relationship.yc =~ 1* ycanx
+    relationship.yf =~ 1* yfanx
+    relationship.ym =~ 1* ymanx
+    
+    # Fix observed variance to zero so it is "transfered" to the latent variables
+    cfanx ~~ 0* cfanx
+    cmanx ~~ 0* cmanx
+    cyanx ~~ 0* cyanx
+    fcanx ~~ 0* fcanx
+    fmanx ~~ 0* fmanx
+    fyanx ~~ 0* fyanx
+    mcanx ~~ 0* mcanx
+    mfanx ~~ 0* mfanx
+    myanx ~~ 0* myanx
+    ycanx ~~ 0* ycanx
+    yfanx ~~ 0* yfanx
+    ymanx ~~ 0* ymanx
+    
+    # Generalized reciprocity:
+    mActor   ~~ gr.m*mPartner
+    fActor   ~~ gr.f*fPartner
+    cActor   ~~ gr.c*cPartner
+    yActor   ~~ gr.y*yPartner
+    
+    # Dyadic reciprocity:
+    mfanx  ~~  dr.fm*fmanx 
+    mcanx  ~~  dr.cm*cmanx
+    myanx  ~~  dr.ym*ymanx
+    fcanx  ~~  dr.cf*cfanx
+    fyanx  ~~  dr.yf*yfanx
+    cyanx  ~~  dr.yc*ycanx
+    
+    # Variance labels
+    family ~~ vf*family
+    
+    mActor ~~ vam*mActor 
+    fActor ~~ vaf*fActor 
+    cActor ~~ vac*cActor  
+    yActor ~~ vay*yActor   
+    
+    mPartner ~~ vpm*mPartner 
+    fPartner ~~ vpf*fPartner 
+    cPartner ~~ vpc*cPartner  
+    yPartner ~~ vpy*yPartner
+    
+    relationship.cf ~~ rv.cf *  relationship.cf
+    relationship.cm ~~ rv.cm *  relationship.cm
+    relationship.cy ~~ rv.cy *  relationship.cy
+    relationship.fc ~~ rv.fc *  relationship.fc
+    relationship.fm ~~ rv.fm *  relationship.fm
+    relationship.fy ~~ rv.fy *  relationship.fy
+    relationship.mc ~~ rv.mc *  relationship.mc
+    relationship.mf ~~ rv.mf *  relationship.mf
+    relationship.my ~~ rv.my *  relationship.my
+    relationship.yc ~~ rv.yc *  relationship.yc
+    relationship.yf ~~ rv.yf *  relationship.yf
+    relationship.ym ~~ rv.ym *  relationship.ym
 '
 
 # Estimate the model 
@@ -192,8 +194,8 @@ familySRM <- sem(family_SRM,
 summary(familySRM, fit.measures = TRUE)
 
 familySRMequalActorVariance <- update(familySRM, add = "vam == vaf
-                                      vam == vac
-                                      vam == vay")                         
+                                                        vam == vac
+                                                        vam == vay")                         
 anova(familySRM, familySRMequalActorVariance)
 
 familySRMequalPartnerVariance <- update(familySRM, add = "vpm == vpf
@@ -215,18 +217,27 @@ familySRMequalRelationshipVariance <- update(familySRM, add =  "rv.cf == rv.cm
                                                                 rv.cf == rv.ym")                         
 anova(familySRM, familySRMequalRelationshipVariance)
 
-familySRMequalGR <- update(familySRM, add = " gr.m == gr.f
+familySRMequalActorAndParnterVariance <- update(familySRM,
+                                                   add = "vam == vaf
+                                                          vam == vac
+                                                          vam == vay
+                                                          vpm == vpf
+                                                          vpm == vpc
+                                                          vpm == vpy")
+
+familySRMequalGR <- update(familySRMequalActorAndParnterVariance, 
+                                       add = "gr.m == gr.f
                                               gr.m == gr.c
                                               gr.m == gr.y")                         
-anova(familySRM, familySRMequalGR)
+anova(familySRMequalActorAndParnterVariance, familySRMequalGR)
 
 
-familySRMequalDR <- update(familySRM, add = "dr.fm == dr.cm
+familySRMequalDR <- update(familySRMequalGR, add = "dr.fm == dr.cm
                                              dr.fm == dr.ym
                                              dr.fm == dr.cf
                                              dr.fm == dr.yf
                                              dr.fm == dr.yc")                         
-anova(familySRM, familySRMequalDR)
+anova(familySRMequalGR, familySRMequalDR)
 
 familySRMIntrageneartionalSimilarity <- update(familySRM, add =
 "# intragenerational similarity:
@@ -302,7 +313,6 @@ family_SRMfreeLoadings <- '
 '
 
 # Estimate the model 
-
 familySRMnotFreeLoadings <- sem(family_SRMnotFreeLoadings, 
                  data = table9.1_df,  
                  orthogonal = TRUE,
@@ -313,6 +323,7 @@ familySRMfreeLoadings <- sem(family_SRMfreeLoadings,
                  data = table9.1_df,  
                  orthogonal = TRUE,
                  mimic = "EQS")
+
 # Examine the model.
 summary(familySRMfreeLoadings, fit.measures = TRUE)
 anova(familySRMnotFreeLoadings, familySRMfreeLoadings)

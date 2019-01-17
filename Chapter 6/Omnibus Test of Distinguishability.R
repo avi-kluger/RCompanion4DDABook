@@ -103,7 +103,7 @@ Figure6.4.model.constrain.all <- '
 
 fitConstrainedAll <- sem(Figure6.4.model.constrain.all, 
            data = table6.1_df, 
-           meanstructure = TRUE, mimic = "EQS")
+           mimic = "EQS")
 summary(fitConstrainedAll, standardized=TRUE)
 anova(fitUnconstrained, fitConstrainedAll)
 
@@ -152,3 +152,4 @@ fitConstrainedNoMeans <- sem(Figure6.4.model.free.means,
                              mimic = "EQS")
 summary(fitConstrainedAll, standardized=TRUE)
 anova(fitUnconstrained, fitConstrainedAll, fitConstrainedNoMeans)
+anova(fitUnconstrained, fitConstrainedAll)

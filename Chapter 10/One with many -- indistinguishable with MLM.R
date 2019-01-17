@@ -18,18 +18,26 @@ if (is.null(dev.list()) == FALSE) dev.off()   # Clean Plots
 if (!require('foreign')) install.packages('foreign'); library('foreign')
 Chapter10_df <- read.spss("http://davidakenny.net/kkc/c10/c10_recip.sav", 
                to.data.frame = TRUE, use.value.labels = FALSE)
+Chapter10_df <- read.csv("https://www.dropbox.com/s/anigavgnv703lep/Chapter10_df?dl=1")
 
-head(Chapter10_df) 
+# Very Important Note.  The original data coded with 0 the focal person.  
+# Therefore the first random variable above is partner variance.  Reversing
+# the codes below make the results more intuitive.  I thank David Kenny for
+# Clarifying this issue.
+
+Chapter10_df$focalcode <- 1- Chapter10_df$focalcode
+Chapter10_df$partcode  <- 1- Chapter10_df$partcode
+head(Chapter10_df, 20) 
 
 if (!require("nlme")) install.packages("nlme"); suppressMessages(library(nlme))
 
-mlm <- lme(outcome ~   0 + focalcode + 0 + partcode, 
+mlm <- lme(outcome ~   0 + focalcode + partcode, 
             random = ~ 0 + focalcode + partcode|focalid/dyadid, 
             data = Chapter10_df)
 summary(mlm)
 intervals(mlm)
-mlmOutput <- VarCorr(mlm)
 VarCorr(mlm)
+mlmOutput <- VarCorr(mlm)
 
 cat(
 "Actor   variance = ",   round(as.numeric(VarCorr(mlm)[, "Variance"][3]), 3),
@@ -38,15 +46,11 @@ cat(
 "\nDyadic Reciprocity = ", round(as.numeric(VarCorr(mlm)[, "Corr"][6]), 3), "\n"
 )
 
-# Very Important Note.  The original data coded with 0 the focal person.  
-# Therefore the first random variable above is partner variance.  Reversing
-# the codes below make the results more intuitive.  I thank David Kenny for
-# Clarifying this issue.
-Chapter10_df$focalcode <- 1- Chapter10_df$focalcode
-Chapter10_df$partcode  <- 1- Chapter10_df$partcode
+
 nlmeMlm <- lme(outcome ~   0 + focalcode + 0 + partcode, 
             random = ~ 0 + focalcode + partcode|focalid/dyadid, 
             data = Chapter10_df)
+summary(nlmeMlm)
 VarCorr(nlmeMlm)
 
 # An alternative suggsted by James Uanhoro <uanhoro.1@buckeyemail.osu.edu>
@@ -62,4 +66,5 @@ as.data.frame(VarCorr(lme4Mlm))
 VarCorr(lme4Mlm)
 
 summary(lme4Mlm)
+
 

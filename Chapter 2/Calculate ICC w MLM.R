@@ -12,7 +12,7 @@ rm(list = ls())                               # Clean the Global Environment
 cat ("\014")                                  # Clean the R console
 if (is.null(dev.list()) == FALSE) dev.off()   # Clean Plots
 
-dyad_df <- read.csv(text = "dyad,x,xprime
+dyad_df <- read.csv(text = "dyad, x, xprime
 1,8,6
 2,5,3
 3,7,2
