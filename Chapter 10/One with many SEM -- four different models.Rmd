@@ -1,28 +1,37 @@
-################################################################################
-#    **************************** R companion for ************************** 
-#
-# Kenny, D. A., Kashy, D. A., & Cook, W. L. (2006). Dyadic data analysis. 
-# New York: Guilford Press.
-#
-# written by Avi Kluger: avik@savion.huji.ac.il
-#
-#                              CHAPTER 10 -- One with many with roles
-################################################################################
-rm(list = ls())                               # Clean the Global Environment
-cat ("\014")                                  # Clean the R console
-if (is.null(dev.list()) == FALSE) dev.off()   # Clean Plots
+---
+title: "One with many reciprocal"
+author: "Avi Kluger"
+date: "January 18, 2019"
+output: html_document
+number_sections: true
+---
+##Summary of MLM results regarding errors, resiudal, and covariance
+package | $\sigma$^2^Focal 	|	$\sigma$^2^Partner	|$\sigma$^2^Residual	|Total $\sigma$^2^Focal	|Total $\sigma$^2^Partner|Cov (SE)| *r*(SE)
+---- | ----- |---- | ----- |---- | ----- |---- | ----- |
+SPSS|.549|.423|NA|.549|.423|NA|.239(.046)
+lme4|.326|.200|.223|.549|.423|0.115(^1^)|.451
+nlme|.376|.502|.046|.549|.423|^1^|.265
+ |  | |  | |  | |  |
+^1^cannot get confidence intervals on var-cov components: Non-positive definite approximate variance-covariance
 
+
+
+```{r echo=FALSE, message=FALSE}
 # Read (in SPSS format) from Kenny's book site and replicate Table 9.1
 if (!require('foreign')) install.packages('foreign'); library('foreign')
 table9.1_df <- read.spss("http://davidakenny.net/kkc/c9/4person.sav", 
                to.data.frame = TRUE, use.value.labels = FALSE)
-# head(table9.1_df) 
-# round(cor(table9.1_df), 2)
 
 if (!require("lavaan")) install.packages("lavaan"); 
 suppressPackageStartupMessages(library(lavaan))
+```
 
 
+## Replicating SPSS MLM output with SEM
+SPSS is taken from book's site. Results are identical to SPSS example in book's site and similar to p. 292
+
+
+```{r}
 # Define an indsitguisable model
 
 OneWithManyIndistinguisableImitateSPSS <- '
@@ -89,7 +98,12 @@ fitOneWithManyIndistinguisableImitateSPSS <-
 # Examine the model.
 summary(fitOneWithManyIndistinguisableImitateSPSS, fit.measures = TRUE, 
         standardized = TRUE)
+```
 
+###Use fSRM syntax.  
+Took the fSRM syntax and deleted all elements that do not pertain to mother as to create one-with-many-reciprocal design.  Note that *lavaan* issues a warning "variables (theta) is not positive definite".  Dyadic reciporcity correlation is not calculated (Inf).  Problems seems similar to problem encountered with *lme4*.  However, estimates are different from *lme4*.  Note that the variances of the observed variables is forced to be zero, and the variance is "transfered" to the error.
+
+```{r}
 OneWithManyIndistinguisableImitate_fSRM <- '
 # Actor effects:
     mActor   =~ 1*mfanx + 1*mcanx + 1*myanx
@@ -146,6 +160,11 @@ fitOneWithManyIndistinguisableImitate_fSRM <-
 # Examine the model.
 summary(fitOneWithManyIndistinguisableImitate_fSRM, 
         fit.measures = TRUE, standardized=TRUE)
+```
+
+###Take the SPSS-compatible model and add intercepts. 
+Constrain intercepts to equality with roles.  Note that the variance is now split between the observed variables (error in MLM?) and the residual (residual in MLM?).  The sums of va + vr and vp + vr are identical to the SPSS output.  The distribution of the variances differ from both *lme4* and *nlme*.
+```{r}
 
 OneWithManyIndistinguisableModelIntercepts <- '
 # Actor effect:
@@ -211,7 +230,11 @@ fitOneWithManyIndistinguisableModelIntercepts <-
 # Examine the model.
 summary(fitOneWithManyIndistinguisableModelIntercepts, 
         fit.measures = TRUE, standardized=TRUE)
+```
 
+###Constrain the residuals of the focal person and partners to equality.
+This model is the same as the above, but produces one estimate of residual.  This constraint lead to a gain of one df.  The  The number of parameters is identical to MLM in R.  The various parameters related to the error are not identical $\chi$^2^.
+```{r}
 OneWithManyIndistinguisableEqualResiduals <- '
 # Actor effect:
       Actor   =~ 1*mfanx + 1*mcanx + 1*myanx
@@ -274,3 +297,5 @@ fitOneWithManyIndistinguisableEqualResiduals <-
 # Examine the model.
 summary(fitOneWithManyIndistinguisableEqualResiduals, 
         fit.measures = TRUE, standardized=TRUE)
+anova(fitOneWithManyIndistinguisableModelIntercepts,
+  fitOneWithManyIndistinguisableEqualResiduals)
