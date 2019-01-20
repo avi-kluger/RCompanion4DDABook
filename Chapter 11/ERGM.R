@@ -59,7 +59,7 @@ plot.network(net)
 
 sampson <- ergm(net~edges) # fit model
 summary(sampson) # look in more depth
-
+vcov(ergm(net~edges))
 
 sampson1 <- ergm(net~edges+mutual)
 summary(sampson1) # look in more depth

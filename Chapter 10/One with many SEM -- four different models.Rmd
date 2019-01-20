@@ -5,7 +5,7 @@ date: "January 18, 2019"
 output: html_document
 number_sections: true
 ---
-##Summary of MLM results regarding errors, resiudal, and covariance
+##Summary of MLM results regarding errors, residuals, and covariances
 package | $\sigma$^2^Focal 	|	$\sigma$^2^Partner	|$\sigma$^2^Residual	|Total $\sigma$^2^Focal	|Total $\sigma$^2^Partner|Cov (SE)| *r*(SE)
 ---- | ----- |---- | ----- |---- | ----- |---- | ----- |
 SPSS|.549|.423|NA|.549|.423|NA|.239(.046)

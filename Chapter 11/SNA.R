@@ -69,12 +69,13 @@ degree_df               <- degree_df[order(degree_df$Monk), ]
 degree_df               <- degree_df [, c("Monk", "Indegree")] 
 Table11.2_df            <- degree_df
 
-closeness_df            <- as.data.frame(closeness(g,  mode="all"))
+closeness_df            <- as.data.frame(closeness(g,  mode="in"))
 colnames(closeness_df)  <- "Closeness"
 closeness_df$Monk       <- rownames(closeness_df)
 closeness_df            <- closeness_df[order(closeness_df$Monk), ]
 closeness_df            <- closeness_df [, c("Monk", "Closeness")] 
-Table11.2_df$Closeness  <- round(closeness_df$Closeness, 3)
+Table11.2_df$Closeness  <- round(1/closeness_df$Closeness, 3)
+
 
 betweenness_df          <- as.data.frame(betweenness(g, directed=T, weights=NA))
 colnames(betweenness_df)<- "Betweenness"
