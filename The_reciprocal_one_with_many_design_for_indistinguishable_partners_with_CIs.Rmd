@@ -2,7 +2,9 @@
 title: "The reciprocal one-with-many design for indistinguishable partners"
 author: "Avi Kluger"
 date: "February 4, 2019"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 ## Abstract
 
