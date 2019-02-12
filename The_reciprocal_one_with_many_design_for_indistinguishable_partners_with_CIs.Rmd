@@ -1,0 +1,276 @@
+---
+title: "The reciprocal one-with-many design for indistinguishable partners"
+author: "Avi Kluger"
+date: "February 4, 2019"
+output: html_document
+---
+## Abstract
+
+This blog shows how to compute, in R, actor and partner variances, as well as generalized and dyadic reciprocities  for *reciprocal one-with-many design for indistinguishable partners*.  This calculation can be done with at least three different approaches:
+
+Approach | package  | Advantage  | Disadvantge 
+-------- | -------- |  -------------------------- | ---------------------------
+MLM |  *nlme* |  fast | requires tweaking with constraining residual to zero
+Meta-analysis | *metafor* | requires no tweaking  | convergence of confidence intervals can take several hours
+SEM | *lavaan* | may be easy for follow-up analysis, such as using predictors and outcomes for actor and partner effects | limited to balanced design (each focal person must have the same number of partners)
+ | | | |
+
+
+## Motivation
+
+Kenny et al., (2006) demonstrate on pages 290-293 how to compute the social relations model (SRM) for the case of *reciprocal one-with-many design for indistinguishable partners*.  This design is relevant, for example, when one collects data from therapists and their patients, where each therapist rate several patients and all patients rate their own therapist on the same variables (e.g., working alliance).  To demonstrate the use of this model, Kenny et al. (2006) used data regarding attachment anxiety that a mother experienced with three family members, and the attachment anxiety experienced by each of these members with the mother, in 208 families.  On page 292, the authors analyze this model with *MLwiN* and report that the actor variance is 0.207, the partner variance is 0.060, and the actor-parter correlation is .70.  In addition, David Kenny shows on his [web site](http://davidakenny.net/kkc/c10/c10.htm) how to analyze this model with SPSS. Specifically, this code
+
+  MIXED  
+&nbsp;&nbsp;      Outcome  BY role  WITH focalcode partcode  
+&nbsp;&nbsp;      /FIXED = focalcode partcode | NOINT  
+&nbsp;&nbsp;      /PRINT = SOLUTION TESTCOV  
+&nbsp;&nbsp;      /RANDOM focalcode partcode | SUBJECT(focalid) COVTYPE(UNR)  
+&nbsp;&nbsp;      /REPEATED = role | SUBJECT(focalid*dyadid) COVTYPE(UNR).  
+
+reproduces, **in bold**, the results from the book.  Interestingly, this output also includes the correlation between the errors, which represent the dyadic correlation, .24, *in italics*.
+
+Estimates of Covariance Parameters^a^ 
+
+Parameter |   _  | Estimate |  Std. Error |  Wald Z | Sig. |  95% CI Lower Bound |  95% CI Upper Bound
+-------------------- | -- | -------- | ----------- | ------ | ------ | ------------- | -------------
+Repeated Measures |  Var(1) |  .423155 |  .029341 |  14.422 |  .000 |  .369385 |  .484753
+_ | Var(2) | .549234 | .038083 | 14.422 | .000 | .479444 | .629184
+_ | Corr(2,1) | *.239029* | .046228 | 5.171 | .000 | .146585 | .327334
+focalcode + partcode [subject = focalid] | Var(1) | **.060898** | .027134 | 2.244 | .025 | .025430 | .145838
+_ | Var(2) | **.208409** | .035715 | 5.835 | .000 | .148952 | .291601
+_ | Corr(2,1) | **.698818** | .170996 | 4.087 | .000 | .206931 | .908699
+ |  |  | | |  |  | |
+^a^  Dependent Variable: outcome. 
+
+The goal of this post is to explore the various ways (MLM, meta-analysis package, and SEM) that the above results can be reproduced in R.
+
+
+## Acknowledgement
+
+I thank [David Kenny](http://davidakenny.net/) for clarifying the meaning of the error covariance (dyadic reciprocity);  [Limor Borut](http://bschool.huji.ac.il/%D7%A1%D7%92%D7%9C_%D7%95%D7%9E%D7%97%D7%A7%D7%A8/%D7%AA%D7%9C%D7%9E%D7%99%D7%93%D7%99_%D7%9E%D7%97%D7%A7%D7%A8/%25D7%259C%25D7%2599%25D7%259E%25D7%2595%25D7%25A8_%25D7%2591%25D7%2595%25D7%25A8%25D7%2595%25D7%2598) for figuring out the proper *lme4* code; [James Uanhoro](https://www.jamesuanhoro.com/) for pointing out the correct syntax for specifying correlations;[Thierry Onkelinx](https://www.linkedin.com/in/thierryonkelinx/?originalSubdomain=be) for pointing out the [uncertainty on the variance estimates](https://www.muscardinus.be/2018/09/number-random-effect-levels/); [Ben Bolker](https://ms.mcmaster.ca/~bolker/) for pointing out that [setting residual to zero is diffiuclt in *lme4*](http://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#setting-residual-variances-to-a-fixed-value-zero-or-other), and how to do it with *nlme* (below); and [Wolfgang Viechtbauer](http://www.wvbauer.com/) for pointing out that "The 'decompositions' are essentially arbitrary then and are just a matter of differences in the optimization routines", and for offering two methods to constrain the residual to zero (shown below). 
+
+
+### Read (in SPSS format) from Kenny's book site and replicate Table 9.1
+
+
+```{r}
+# To read the data from Kenny's site:
+# if (!require('foreign')) install.packages('foreign'); library('foreign')
+# Chapter10_df <- read.spss("http://davidakenny.net/kkc/c10/c10_recip.sav", 
+#                to.data.frame = TRUE, use.value.labels = FALSE)
+
+# Read copy of the data from GitHub
+Chapter10_df <- read.csv("https://raw.githubusercontent.com/avi-kluger/RCompanion4DDABook/master/Chapter%2010/Chapter10_df.csv")
+
+```
+
+**Very Important Note**.  The original data coded with 0 the focal person. Therefore, the first random variable above is partner variance.  Reversing the codes below make the results more intuitive.  I thank David Kenny for clarifying this issue.
+
+```{r}
+Chapter10_df$focalcode <- 1- Chapter10_df$focalcode
+Chapter10_df$partcode  <- 1- Chapter10_df$partcode
+head(Chapter10_df, 20)
+```
+
+## Two solutions with *nlme*
+### *nlme* solution 1
+
+Ben Bolker indicated that in lme you can set the residual std dev to a fixed small value, but not to exactly zero:
+
+lme(Reaction ~ Days, 
+  random =  ~ 1 | Subject,
+  sleepstudy,
+  control = list(sigma = 1e-8))
+  
+However, the value *sigma = 1e-8* fails with a message *message = false convergence*.  Playing the sigma and increasing it to .01 solves the problem in this data set. 
+
+```{r}
+if (!require("nlme")) install.packages("nlme"); suppressMessages(library(nlme))
+
+# 
+#   If you're trying to test that the covariance is significantly positive, I think getting the standard error is the wrong approach; the Wald (quadratic) approximation is often very bad for random-effects variances and covariances.  I would suggest profile confidence intervals or a likelihood ratio test.
+# 
+
+mlm <- lme(outcome ~   0 + focalcode + partcode,
+            random = ~ 0 + focalcode + partcode | focalid / dyadid,
+            control = list(sigma = .01),
+            data = Chapter10_df)
+(mlmOutput <- VarCorr(mlm))
+```
+
+As can be seen in the results above, the results are identical up to the third decimal point to the SPSS results.  Next, Ben Bolker indicated that "If you're trying to test that the covariance is significantly positive, I think getting the standard error is the wrong approach; the Wald (quadratic) approximation is often very bad for random-effects variances and covariances.  I would suggest profile confidence intervals or a likelihood ratio test."  As can be seen below, the confidence intervals are similar to SPSS (some deviation for lower bound for generalized reciprocity)
+
+```{r}
+intervals(mlm)
+```
+
+In summary, this analysis indicates
+
+Parameter | Estimate
+------- | ------------
+Actor variance | `r round(as.numeric(VarCorr(mlm)[, "Variance"][2]), 3)`
+Partner variance | `r round(as.numeric(VarCorr(mlm)[, "Variance"][3]), 3)`
+Generalized Reciprocity | `r round(as.numeric(VarCorr(mlm)[, "Corr"][3]), 3)`
+Dyadic Reciprocity | `r round(as.numeric(VarCorr(mlm)[, "Corr"][6]), 3)`
+ | 
+
+### *nlme* solution 2
+
+Wolfgang Viechtbauer wrote that "the default optimizer (nlminb) fails. Switching to 'optim' (with method 'BFGS') works."  Hence, just opt argument to the control line, prevents the need from tweaking with sigma, as shown below.
+
+```{r}
+
+mlm <- lme(outcome ~   0 + focalcode + partcode,
+            random = ~ 0 + focalcode + partcode | focalid / dyadid,
+            control = list(sigma=1e-8, opt = "optim"),
+            data = Chapter10_df)
+(mlmOutput <- VarCorr(mlm))
+```
+However, these results are not identical to SPSS.  For example, the correlation between focal code and partcode (generalized reciprocity) is .648, as opposed to .699.
+
+## *metafor* solution
+
+Wolfgang Viechtbauer also proposed a solution with *metafor* that requires no tweaking and reproduces results to the dot, but "model fitting can be slow with rma.mv(), so you might have to wait a bit for it to converge)."
+
+```{r}
+# IMPORTANT: install the metafor package by removing the # below
+# devtools::install_github("wviechtb/metafor")
+library(metafor)
+
+df <- Chapter10_df
+
+df$dyadid.in.focalid <- interaction(df$focalid, df$dyadid)
+res <- rma.mv(outcome ~ 0 + focalcode + partcode, 
+               V = 0, 
+               random = list(~ 0 + focalcode + partcode | focalid, 
+                             ~ 0 + focalcode + partcode | dyadid.in.focalid), 
+               struct = "GEN", data = df, sparse = TRUE)
+res
+
+```
+
+### *metafor* solution with confidence intervals
+
+Wolfgang Viechtbauer added that "you can get profile likelihood CIs...But this will take quite some time, so you might want to run this when you don't need your computer for a while." While you can specify a parameter for which you want the CI (to save time), as I show in commented script, I run here CI for all parameters.  This took about 3 hours to converge!
+
+
+```{r}
+# ci.rho <- confint(res, rho = 1, verbose = TRUE)
+# ci.rho
+# ci.phi <- confint(res, phi = 1, verbose = TRUE)
+# ci.phi
+confint(res)
+```
+
+
+## SEM solution with *lavaan*
+
+This solution is based on *fSRM* package.  *fSRM* is designed for family social relations model for round robin with roles. I used their *lavaan* code to model one-with-many and applied constraints on the roles to be equal to force the model to be indistinguishable.  This is a viable solution if the data are balanced (every focal person has the same number of partners).  Note that this analysis requires to input data in a wide format.  The code below reads the data already set in a wide format.
+
+```{r}
+# Read (in SPSS format) from Kenny's book site and replicate Table 9.1
+library('foreign')
+
+# Read data from David Kenny's site
+# table9.1_df <- read.spss("http://davidakenny.net/kkc/c9/4person.sav", 
+#                to.data.frame = TRUE, use.value.labels = FALSE)
+
+# Read same data from GitHub
+table9.1_df <- read.spss(
+"https://github.com/avi-kluger/RCompanion4DDABook/blob/master/4person.sav?raw=true", 
+               to.data.frame = TRUE, use.value.labels = FALSE)
+
+head(table9.1_df) 
+round(cor(table9.1_df), 2)
+
+if (!require("lavaan")) install.packages("lavaan"); 
+suppressPackageStartupMessages(library(lavaan))
+
+
+OneWithManyDistinguishable <- '
+# Actor effects:
+        Actor   =~ 1*mfanx + 1*mcanx + 1*myanx
+        
+# Partner effects:
+        Partner =~ 1*fmanx + 1*cmanx + 1*ymanx
+        
+# Generalized reciprocity:
+        Actor   ~~ Partner
+    
+# Dyadic reciprocity:
+        mfanx  ~~  fmanx
+        mcanx  ~~  cmanx
+        myanx  ~~  ymanx
+'
+# Estimate the model 
+fitOneWithManyDistinguishable <- sem(OneWithManyDistinguishable, 
+                 data = table9.1_df,  
+                 orthogonal = TRUE,
+                 mimic = "EQS")
+# Examine the model.
+summary(fitOneWithManyDistinguishable, 
+        fit.measures = TRUE, standardized = TRUE)
+
+
+OneWithManyIndistinguisableReplicateSPSS <- '
+# Actor effects:
+    mActor   =~ 1*mfanx + 1*mcanx + 1*myanx
+    
+# Partner effects:
+    mPartner =~ 1*fmanx + 1*cmanx + 1*ymanx
+    
+# Fix variances to equality with focal person (a) and partner (p)
+    mcanx ~~ a* mcanx
+    mfanx ~~ a* mfanx
+    myanx ~~ a* myanx
+
+    cmanx ~~ p* cmanx
+    fmanx ~~ p* fmanx
+    ymanx ~~ p* ymanx
+    
+# Generalized reciprocity:
+    mActor   ~~ gr*mPartner
+    
+# Dyadic reciprocity:
+    mfanx  ~~  dr*fmanx 
+    mcanx  ~~  dr*cmanx
+    myanx  ~~  dr*ymanx
+    
+# Variance labels
+    
+    mActor   ~~ Actor  *mActor 
+    mPartner ~~ Partner*mPartner 
+    
+# Fix intercepts to equality within focal person and partner
+    mcanx ~ ia * 1
+    mfanx ~ ia * 1
+    myanx ~ ia * 1
+
+    cmanx ~ ip * 1
+    fmanx ~ ip * 1
+    ymanx ~ ip * 1
+'
+
+# Estimate the model 
+fitOneWithManyIndistinguisableReplicateSPSS <- 
+                 sem(OneWithManyIndistinguisableReplicateSPSS, 
+                 data = table9.1_df,  
+                 orthogonal = TRUE,
+                 mimic = "EQS",
+                 estimator ="MLM")
+# Examine the model
+summary(fitOneWithManyIndistinguisableReplicateSPSS, 
+        fit.measures = TRUE, standardized=TRUE)
+```
+
+
+
+
+
+
+```
+
+
+## References
+ 
+Kenny, D. A., Kashy, D. A., & Cook, W. L. (2006). *Dyadic data analysis*. New York: Guilford Press.
