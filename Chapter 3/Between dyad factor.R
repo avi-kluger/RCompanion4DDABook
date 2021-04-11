@@ -4,7 +4,7 @@
 # Kenny, D. A., Kashy, D. A., & Cook, W. L. (2006). Dyadic data analysis. 
 # New York: Guilford Press.
 #
-# written by Avi Kluger: avik@savion.huji.ac.il
+# written by Avi Kluger: avik@savion.huji.ac.il; April 2021
 #
 #                              CHAPTER 3 -- Table 3.1
 ################################################################################
@@ -13,40 +13,47 @@ cat ("\014")                                  # Clean the R console
 if (is.null(dev.list()) == FALSE) dev.off()   # Clean Plots
 
 # Read Klump et al sample data (in SPSS format) from Kenny's book site
-if (!require('foreign')) install.packages('foreign'); library('foreign')
-Klump_et_al <- read.spss("http://davidakenny.net/kkc/c3/klumpindividual.sav", 
-                         to.data.frame=TRUE)
+if (!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
+Klump_et_al <- haven::read_sav(
+               "http://davidakenny.net/kkc/c3/klumpindividual.sav")
 
-if (!require("nlme")) install.packages("nlme"); library(nlme)
 
-# Null model
+# Replicate the means and sd per cohort reported on p. 54
+if (!require("sjPlot")) install.packages("sjPlot"); library(sjPlot)
+Klump_et_al %>% 
+  group_by(cohort) %>% 
+  summarize(m = mean(total), sd = sd(total)) %>% 
+  tab_df
 
-mlm     <- gls(total ~ 1, data = Klump_et_al,
-           na.action = "na.omit", verbose = TRUE,
-           correlation = corCompSymm(form = ~1|dyad))
-icc     <- intervals(mlm) ["corStruct"]
-round(as.data.frame(icc), 3)
+# The book report analyses with ANOVA. Here I demonstrate obtaining the same
+# results (partial ICC, dD and d) with MLM, 
+# which, unlike ANOVA, can be used with missing data.
 
 # Between dyad factor (cohort) model
 # Make cohort a dummy code
 Klump_et_al$cohort <- (Klump_et_al$cohort - 11) / 6
 
-if (!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
-group_by(Klump_et_al, cohort) %>% summarize(m = mean(total),
-                                            sd = sd(total))
+# Obtain both partial ICC and a test for the between dyad predictor with lme4
+if (!require("lme4")) install.packages("lme4"); library(lme4)
+mlm <- lmer(total ~ cohort + (1 | dyad), data = Klump_et_al)
+tab_model(mlm)
 
-mlm     <- gls(total ~ cohort, data = Klump_et_al,
-           na.action = "na.omit", verbose = TRUE,
-           correlation=corCompSymm(form = ~1|dyad))
-fit <- (summary(mlm))
+# Obtain the above + CI for partial ICC
+if (!require("nlme")) install.packages("nlme"); library(nlme)
+
+mlm     <- gls(total ~ cohort, correlation=corCompSymm(form = ~1 | dyad),
+               data = Klump_et_al)
+fit     <- summary(mlm)
+fit
 icc     <- as.data.frame(intervals(mlm) ["corStruct"])
 round(icc, 3)
 
-# Calculate d with formulae from p. 57
+# Calculate d with formula from p. 57. The formula in the book is based on F;
+# The output here reports t, which with 1 df = sqrt(F)
 t      <- as.numeric(fit$tTable["cohort", "t-value"])
 ri     <- as.numeric(icc["corStruct.est."])
-nDyads <- sqrt(nrow(Klump_et_al)/2)
-dD     <- 2*t / nDyads
+nDyads <- nrow(Klump_et_al) / 2
+dD     <- 2*t / sqrt(nDyads)
 d      <- dD * sqrt((1+ ri)/ 2)
 round(dD, 3)
 round(d, 3)

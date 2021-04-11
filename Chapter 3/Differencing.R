@@ -13,11 +13,9 @@ cat ("\014")                                  # Clean the R console
 if (is.null(dev.list()) == FALSE) dev.off()   # Clean Plots
 
 # Read Table 3.5 (in SPSS format) from Kenny's book site
-if (!require('foreign')) install.packages('foreign'); 
-suppressMessages(library('foreign'))
+if (!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
+table3.5_df <- haven::read_sav("http://davidakenny.net/kkc/c3/table3.5.sav")
 
-table3.5_df <- read.spss("http://davidakenny.net/kkc/c3/table3.5.sav", 
-               to.data.frame = TRUE)
 t.test(table3.5_df$DIFF)
 fit         <- lm(DIFF ~ GDIFF + 0, data = table3.5_df)
 summary(fit)$coefficients
@@ -28,46 +26,56 @@ t           <- as.numeric(summary(fit)$coefficients[3])
 rd          <- as.numeric(t/sqrt(t^2 + summary(fit)$df[2]))
 
 # Compute ICC
-if (!require('tidyverse')) install.packages('tidyverse'); 
-suppressMessages(library('tidyverse'))
-
-# Transform dyad df into individual df, create dyadMember and score
-individual_df        <- table3.5_df %>% gather(dyadMember, score, H:W)
-# Create an effect code for gender. Necessary only if user wants to control
-# the sign of the regression; otherwise use dyadMember and gls will 
-# treat dyadMember as a dummy variable and print the group being used
+# Transform dyad df into individual (long) df
+l <- table3.5_df %>% 
+  select(DYAD:W) %>% 
+  pivot_longer(                           
+    cols      = !DYAD,
+    names_to  = "gender",
+    values_to = "score")
+# Create an effect code (EC) for gender. Necessary only if user wants to control
+# the sign of the regression; otherwise use gender; gls will 
+# treat gender as a dummy variable and print the group being used
 # as the reference group.
-individual_df$gender <- ifelse(individual_df$dyadMember == "H", 1, -1)
+l$genderEC <- ifelse(l$gender == "H", 1, -1)
+
+# Create a dummy code for gender, for obtaining standardized effect
+l$genderDC <- ifelse(l$gender == "H", 1, 0)
 
 if (!require("nlme")) install.packages("nlme"); suppressMessages(library(nlme))
 
 # Demonstrate mlm without preparing an effect code
-mlm         <- gls(score   ~ dyadMember, 
-                   correlation = corCompSymm(form = ~1|DYAD),
-                   data = individual_df)
-summary(mlm)
-# Demonstrate mlm with effect code
 mlm         <- gls(score   ~ gender, 
                    correlation = corCompSymm(form = ~1|DYAD),
-                   data = individual_df)
+                   data = l)
 summary(mlm)
 
-# Demonstrate mlm with stanadrdized varialbes
-mlmS        <- gls(scale(score)   ~ scale(gender), 
+# Demonstrate mlm with effect code
+mlm         <- gls(score   ~ genderEC, 
                    correlation = corCompSymm(form = ~1|DYAD),
-                   data = individual_df)
+                   data = l)
+summary(mlm)
+
+# Demonstrate mlm with standardized varialbes
+mlmS        <- gls(scale(score)   ~ scale(genderDC), 
+                   correlation = corCompSymm(form = ~1|DYAD),
+                   data = l)
 summary(mlmS)
 
+# NOTE: ICC in the book is .33, which is an error. ICC = .43
 icc         <- intervals(mlm) ["corStruct"]
 icc         <- round(as.data.frame(icc), 2)
 r           <- rd * sqrt(1 - icc[2])
+
+# Obtain the book's result for r if using erroneous ICC
+rd * sqrt(1 - .33)
 
 cat(paste0("\nrD = ", rd, " and adjusted r = ", round(as.numeric(r), 2), "\n"))
 
 if (!require("compute.es")) install.packages("compute.es"); 
 suppressPackageStartupMessages(library(compute.es))
 # Convert Pearson's r to Cohen's d and other effect sizes
-res(as.numeric(r), n = nrow(individual_df))
+res(as.numeric(r), n = nrow(l))
 
 # d calculation based on Within Dyad formula and ICC based on Pearson's r  
 r   <- round(cor(table3.5_df[, c("H", "W")]), 2)[1, 2]
@@ -81,4 +89,5 @@ dD
 d
 
 # Convert Cohen's d to Pearson's r and other effect sizes
+des(dD, n.1 = nrow(table3.5_df), n.2 = nrow(table3.5_df))
 des(d, n.1 = nrow(table3.5_df), n.2 = nrow(table3.5_df))
